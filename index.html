@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>zsfcat</title>
+    <title>Enhanced Chat</title>
     <style>
         body {
             background-color: black;
@@ -42,6 +42,12 @@
             color: #888;
             font-size: 0.8em;
             margin-left: 10px;
+        }
+        .system-message {
+            color: #FF6B6B;
+            font-style: italic;
+            text-align: center;
+            margin: 10px 0;
         }
         #input-container {
             display: flex;
@@ -84,6 +90,12 @@
         .capacity-info {
             color: #4cc9f0;
         }
+        .command-help {
+            color: #888;
+            font-size: 0.9em;
+            margin-top: 5px;
+            text-align: center;
+        }
     </style>
     
     <!-- Firebase SDK -->
@@ -102,6 +114,7 @@
             <input type="text" id="message-input" placeholder="Type your message...">
             <button id="send-button">Send</button>
         </div>
+        <div class="command-help">Type "blankslate" to clear all message history</div>
         <div id="status">Setting up Firebase...</div>
     </div>
 
@@ -196,6 +209,48 @@
             return capacity;
         }
 
+        // Clear all messages from Firestore
+        async function clearAllMessages() {
+            try {
+                // Get all messages
+                const querySnapshot = await db.collection("messages")
+                    .orderBy("timestamp", "desc")
+                    .get();
+                
+                // Delete each message
+                const deletePromises = [];
+                querySnapshot.forEach((doc) => {
+                    deletePromises.push(doc.ref.delete());
+                });
+                
+                // Wait for all deletions to complete
+                await Promise.all(deletePromises);
+                
+                // Add a system message indicating the chat was cleared
+                await db.collection("messages").add({
+                    user: "System",
+                    text: `Chat history was cleared by ${username}`,
+                    time: new Date().toLocaleTimeString(),
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                return true;
+            } catch (error) {
+                console.error("Error clearing messages:", error);
+                return false;
+            }
+        }
+
+        // Add a system message to the chat
+        function addSystemMessage(text) {
+            const messagesContainer = document.getElementById('messages');
+            const systemMessage = document.createElement('div');
+            systemMessage.className = 'system-message';
+            systemMessage.textContent = text;
+            messagesContainer.appendChild(systemMessage);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
         // Initialize chat
         let username = '';
         let screenCapacity = 20; // Default, will be updated
@@ -246,14 +301,22 @@
                 const messageElement = document.createElement('div');
                 messageElement.className = 'message';
                 
-                // Get color for this username
-                const userColor = getColorForUsername(msg.user);
+                // Check if this is a system message
+                if (msg.user === "System") {
+                    messageElement.innerHTML = `
+                        <div class="system-message">${msg.text}</div>
+                    `;
+                } else {
+                    // Get color for this username
+                    const userColor = getColorForUsername(msg.user);
+                    
+                    messageElement.innerHTML = `
+                        <span class="username" style="color: ${userColor}">${msg.user}:</span> 
+                        ${msg.text}
+                        <span class="timestamp">${msg.time}</span>
+                    `;
+                }
                 
-                messageElement.innerHTML = `
-                    <span class="username" style="color: ${userColor}">${msg.user}:</span> 
-                    ${msg.text}
-                    <span class="timestamp">${msg.time}</span>
-                `;
                 messagesContainer.appendChild(messageElement);
             });
             
@@ -267,12 +330,24 @@
             
             if (text) {
                 try {
-                    await db.collection("messages").add({
-                        user: username,
-                        text: text,
-                        time: new Date().toLocaleTimeString(),
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+                    // Check if the message is the special command
+                    if (text.toLowerCase() === 'blankslate') {
+                        addSystemMessage(`Clearing all messages...`);
+                        const success = await clearAllMessages();
+                        if (success) {
+                            addSystemMessage(`Chat history has been cleared by ${username}`);
+                        } else {
+                            addSystemMessage(`Failed to clear chat history. Please try again.`);
+                        }
+                    } else {
+                        // Regular message
+                        await db.collection("messages").add({
+                            user: username,
+                            text: text,
+                            time: new Date().toLocaleTimeString(),
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
                     
                     input.value = '';
                 } catch (error) {
