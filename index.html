@@ -216,6 +216,48 @@
             margin-left: 10px;
             font-size: 0.9em;
         }
+        .help-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #222;
+            border: 1px solid #444;
+            padding: 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .help-modal h3 {
+            margin-top: 0;
+            color: #FFD700;
+            text-align: center;
+        }
+        .help-section {
+            margin: 15px 0;
+        }
+        .help-section h4 {
+            color: #4cc9f0;
+            margin-bottom: 8px;
+        }
+        .command-list {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .command-item {
+            margin: 8px 0;
+        }
+        .command-name {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        .command-desc {
+            color: #ccc;
+        }
     </style>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -241,12 +283,12 @@
 
     <div class="overlay" id="overlay"></div>
     <div class="donation-modal" id="donation-modal">
-        <h3><img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDIyQzE3LjUyMjggMjIgMjIgMTcuNTIyOCAyMiAxMkMyMiA2LjQ3NzE1IDE3LjUyMjggMiAxMiAyQzYuNDc3MTUgMiAyIDYuNDc3MTUgMiAxMkMyIDE3LjUyMjggNi40NzcxNSAyMiAxMiAyMloiIGZpbGw9IiM0QkE0RkYiLz4KPHBhdGggZD0iTTEyLjg4NTcgNi41ODU3MUMxMi44ODU3IDYuNTg1NzEgMTUuMDI4NiA3LjM0Mjg2IDE1LjAyODYgOS40ODcxNEMxNS4wMjg2IDExLjYzMTQgMTIuODg1NyAxMi4zODg2IDEyLjg4NTcgMTIuMzg4NkMxMi44ODU3IDEyLjM4ODYgMTAuNzQyOSAxMS42MzE0IDEwLjc0MjkgOS40ODcxNEMxMC43NDI5IDcuMzQyODYgMTIuODg1NyA2LjU4NTcxIDEyLjg4NTcgNi41ODU3MVoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik03LjgxNDI5IDEwLjYyODZDNy44MTQyOSAxMC42Mjg2IDkuMTE0MjkgMTEuMTE0MyA5LjExNDI5IDEyLjU0MjlDOS4xMTQyOSAxMy45NzE0IDcuODE0MjkgMTQuNDU3MSA3LjgxNDI5IDE0LjQ1NzFDNy44MTQyOSAxNC40NTcxIDYuNTE0MjkgMTMuOTcxNCA2LjUxNDI5IDEyLjU0MjlDNi41MTQyOSAxMS4xMTQzIDcuODE0MjkgMTAuNjI4NiA3LjgxNDI5IDEwLjYyODZaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTcuOTQyOSAxMC42Mjg2QzE3Ljk0MjkgMTAuNjI4NiAxOS4yNDI5IDExLjExNDMgMTkuMjQyOSAxMi41NDI5QzE5LjI0MjkgMTMuOTcxNCAxNy45NDI5IDE0LjQ1NzEgMTcuOTQyOSAxNC40NTcxQzE3Ljk0MjkgMTQuNDU3MSAxNi42NDI5IDEzLjk3MTQgMTYuNjQyOSAxMi41NDI5QzE2LjY0MjkgMTEuMTE0MyAxNy45NDI5IDEwLjYyODYgMTcuOTQyOSAxMC42Mjg2WiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cg==" class="phantom-logo">Donate via Phantom Wallet</h3>
+        <h3><img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDIyQzE3LjUyMjggMjIgMjIgMTcuNTIyOCAyMiAxMkMyMiA2LjQ3NzE1IDE3LjUyMjggMiAxMiAyQzYuNDc3MTUgMiAyIDYuNDc3MTUgMiAxMkMyIDE3LjUyMjggNi40NzcxNSAyMiAxMiAyMloiIGZpbGw9IiM0QkE0RkYiLz4KPHBhdGggZD0iTTEyLjg4NTcgNi41ODU3MUMxMi44ODU3IDYuNTg1NzEgMTUuMDI4NiA3LjM0Mjg2IDEwLjAyODYgOS40ODcxNEMxNS4wMjg2IDExLjYzMTQgMTIuODg1NyAxMi4zODg2IDEyLjg4NTcgMTIuMzg4NkMxMi44ODU3IDEyLjM4ODYgMTAuNzQyOSAxMS42MzE0IDEwLjc0MjkgOS40ODcxNEMxMC43NDI5IDcuMzQyODYgMTIuODg1NyA2LjU4NTcxIDEyLjg4NTcgNi41ODU3MVoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik03LjgxNDI5IDEwLjYyODZDNy44MTQyOSAxMC42Mjg2IDkuMTE0MjkgMTEuMTE0MyA5LjExNDI5IDEyLjU0MjlDOS4xMTQyOSAxMy45NzE0IDcuODE0MjkgMTQuNDU3MSA3LjgxNDI5IDE4LjQ1NzFDNy44MTQyOSAxNC40NTcxIDYuNTE0MjkgMTMuOTcxNCA2LjUxNDI5IDEyLjU0MjlDNi41MTQyOSAxMS4xMTQzIDcuODE0MjkgMTAuNjI4NiA3LjgxNDI5IDEwLjYyODZaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTcuOTQyOSAxMC42Mjg2QzE3Ljk0MjkgMTAuNjI4NiAxOS4yNDI5IDExLjExNDMgMTkuMjQyOSAxMi41NDI5QzE5LjI0MjkgMTMuOTcxNCAxNy45NDI5IDE0LjQ1NzEgMTcuOTQyOSAxNC40NTcxQzE3Ljk0MjkgMTQuNDU3MSAxNi42NDI5IDEzLjk3MTQgMTYuNjQyOSAxMi41NDI5QzE2LjY0MjkgMTEuMTE0MyAxNy45NDI5IDEwLjYyODYgMTcuOTQyOSAxMC42yODZaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K" class="phantom-logo">Donate via Phantom Wallet</h3>
         <div id="donation-status" class="donation-status status-waiting">Preparing transaction...</div>
         <p>Send <span id="donation-amount">0</span> SOL to support zsfcat</p>
         
         <div class="transaction-details">
-            <div>Recipient: <span id="recipient-address">Loading...</span></div>
+            <div>Recipient: <span id="recipient-address">H5yWNDj9tKahs4B3RKxG4NrPYjkHqgjTkKkFRyQxCVA2</span></div>
             <div>Network: <span id="network-info">Solana Mainnet</span></div>
             <div>Your Address: <span id="user-address">Not connected</span></div>
         </div>
@@ -258,6 +300,56 @@
         <div>
             <button onclick="initiateDonation()" id="donate-button">Initiate Transaction</button>
             <button onclick="closeDonationModal()">Cancel</button>
+        </div>
+    </div>
+
+    <div class="help-modal" id="help-modal">
+        <h3>Available Commands</h3>
+        
+        <div class="help-section">
+            <h4>Public Commands</h4>
+            <div class="command-list">
+                <div class="command-item">
+                    <span class="command-name">/help</span> - <span class="command-desc">Show this help message</span>
+                </div>
+                <div class="command-item">
+                    <span class="command-name">/donate_[amount]</span> - <span class="command-desc">Donate SOL to support zsfcat</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="help-section">
+            <h4>Moderation Commands</h4>
+            <div class="command-list">
+                <div class="command-item">
+                    <span class="command-name">/mute_[username]_[minutes]</span> - <span class="command-desc">Mute a user for specified minutes</span>
+                </div>
+                <div class="command-item">
+                    <span class="command-name">/ban_[username]_[days]</span> - <span class="command-desc">Ban a user for specified days</span>
+                </div>
+                <div class="command-item">
+                    <span class="command-name">/badgestrip_[username]</span> - <span class="command-desc">Remove all badges from a user</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="help-section">
+            <h4>Special Commands</h4>
+            <div class="command-list">
+                <div class="command-item">
+                    <span class="command-name">/i_am_the_creator</span> - <span class="command-desc">Become THE_CREATOR (one-time use)</span>
+                </div>
+                <div class="command-item">
+                    <span class="command-name">/peasant</span> - <span class="command-desc">THE_CREATOR can disguise as a regular user</span>
+                </div>
+                <div class="command-item">
+                    <span class="command-name">/blankslate</span> - <span class="command-desc">Clear all message history</span>
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 20px;">
+            <button onclick="closeHelpModal()">Close</button>
         </div>
     </div>
 
@@ -286,6 +378,7 @@
         const mutedUsers = {};
         const bannedUsers = {};
         const donorUsers = {};
+        const creatorUsers = {};
         
         let donationAmount = 0;
         let phantomProvider = null;
@@ -293,8 +386,8 @@
         let donationInterval = null;
         let userPublicKey = null;
 
-        // Recipient wallet address (replace with your own)
-        const recipientAddress = "H8o2dz7o2g1fQhDB2h2KqNXj8V2h2KqNXj8V2h2KqNXj8V";
+        // Updated recipient wallet address
+        const recipientAddress = "H5yWNDj9tKahs4B3RKxG4NrPYjkHqgjTkKkFRyQxCVA2";
 
         function setCookie(name, value, days) {
             const expires = new Date();
@@ -407,6 +500,26 @@
             return banTime;
         }
 
+        function stripBadges(username) {
+            if (username === 'THE_CREATOR') {
+                addSystemMessage('Cannot strip badges from THE_CREATOR');
+                return false;
+            }
+            
+            if (donorUsers[username]) {
+                delete donorUsers[username];
+                setCookie('user_donor_' + username, 'false', 365);
+            }
+            
+            if (creatorUsers[username]) {
+                delete creatorUsers[username];
+                setCookie('user_creator_' + username, 'false', 365);
+            }
+            
+            addSystemMessage(`All badges have been stripped from ${username}`);
+            return true;
+        }
+
         function showDonationModal(amount) {
             donationAmount = amount;
             document.getElementById('donation-amount').textContent = amount;
@@ -427,6 +540,16 @@
                 clearInterval(donationInterval);
                 donationInterval = null;
             }
+        }
+
+        function showHelpModal() {
+            document.getElementById('help-modal').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+        }
+
+        function closeHelpModal() {
+            document.getElementById('help-modal').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
         }
 
         function updateDonationStatus(status, message) {
@@ -512,7 +635,7 @@
                 
                 // Mark user as donor
                 donorUsers[username] = true;
-                setCookie('user_donor', 'true', 365);
+                setCookie('user_donor_' + username, 'true', 365);
                 
                 setTimeout(() => {
                     addSystemMessage(`Thank you ${username} for donating ${donationAmount} SOL! You've received a DONOR badge.`);
@@ -526,7 +649,11 @@
         }
 
         function isUserDonor(username) {
-            return donorUsers[username] || getCookie('user_donor') === 'true';
+            return donorUsers[username] || getCookie('user_donor_' + username) === 'true';
+        }
+
+        function isUserCreator(username) {
+            return creatorUsers[username] || getCookie('user_creator_' + username) === 'true' || username === 'THE_CREATOR';
         }
 
         function processCommand(command, originalUsername) {
@@ -540,6 +667,8 @@
             if (command === '/i_am_the_creator') {
                 if (originalUsername !== 'THE_CREATOR') {
                     setCookie('chat_username', 'THE_CREATOR', 365);
+                    creatorUsers[originalUsername] = true;
+                    setCookie('user_creator_' + originalUsername, 'true', 365);
                     addSystemMessage(`${originalUsername} has been promoted to THE_CREATOR`);
                     setTimeout(() => {
                         window.location.reload();
@@ -604,8 +733,21 @@
                 }
             }
             
+            if (parts[0] === '/badgestrip' && parts.length === 2) {
+                const targetUser = parts[1];
+                
+                if (targetUser === 'THE_CREATOR') {
+                    addSystemMessage('Cannot strip badges from THE_CREATOR');
+                    return true;
+                }
+                
+                if (stripBadges(targetUser)) {
+                    return true;
+                }
+            }
+            
             if (command === '/help') {
-                addSystemMessage('Available commands: /blankslate, /i_am_the_creator, /peasant, /donate_[amount], /mute_[user]_[mins], /ban_[user]_[days]');
+                showHelpModal();
                 return true;
             }
             
@@ -703,8 +845,12 @@
                     loadMessages();
                 });
                 
-                if (getCookie('user_donor') === 'true') {
+                if (getCookie('user_donor_' + username) === 'true') {
                     donorUsers[username] = true;
+                }
+                
+                if (getCookie('user_creator_' + username) === 'true') {
+                    creatorUsers[username] = true;
                 }
                 
                 // Try to auto-connect to Phantom
@@ -754,7 +900,7 @@
                     `;
                 } else {
                     const userColor = getColorForUsername(msg.user);
-                    const isCreator = msg.user === 'THE_CREATOR';
+                    const isCreator = isUserCreator(msg.user);
                     const isDonor = isUserDonor(msg.user);
                     
                     messageElement.innerHTML = `
