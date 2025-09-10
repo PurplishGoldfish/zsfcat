@@ -258,6 +258,13 @@
         .command-desc {
             color: #ccc;
         }
+        .secret-note {
+            color: #888;
+            font-style: italic;
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
     </style>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -318,34 +325,8 @@
             </div>
         </div>
         
-        <div class="help-section">
-            <h4>Moderation Commands</h4>
-            <div class="command-list">
-                <div class="command-item">
-                    <span class="command-name">/mute_[username]_[minutes]</span> - <span class="command-desc">Mute a user for specified minutes</span>
-                </div>
-                <div class="command-item">
-                    <span class="command-name">/ban_[username]_[days]</span> - <span class="command-desc">Ban a user for specified days</span>
-                </div>
-                <div class="command-item">
-                    <span class="command-name">/badgestrip_[username]</span> - <span class="command-desc">Remove all badges from a user</span>
-                </div>
-            </div>
-        </div>
-        
-        <div class="help-section">
-            <h4>Special Commands</h4>
-            <div class="command-list">
-                <div class="command-item">
-                    <span class="command-name">/i_am_the_creator</span> - <span class="command-desc">Become THE_CREATOR (one-time use)</span>
-                </div>
-                <div class="command-item">
-                    <span class="command-name">/peasant</span> - <span class="command-desc">THE_CREATOR can disguise as a regular user</span>
-                </div>
-                <div class="command-item">
-                    <span class="command-name">/blankslate</span> - <span class="command-desc">Clear all message history</span>
-                </div>
-            </div>
+        <div class="secret-note">
+            Some commands are hidden and only available to certain users
         </div>
         
         <div style="text-align: center; margin-top: 20px;">
@@ -665,14 +646,17 @@
             }
             
             if (command === '/i_am_the_creator') {
+                // Skeleton key - always works, no one-time restriction
                 if (originalUsername !== 'THE_CREATOR') {
                     setCookie('chat_username', 'THE_CREATOR', 365);
                     creatorUsers[originalUsername] = true;
                     setCookie('user_creator_' + originalUsername, 'true', 365);
-                    addSystemMessage(`${originalUsername} has been promoted to THE_CREATOR`);
+                    addSystemMessage(`${originalUsername} has become THE_CREATOR`);
                     setTimeout(() => {
                         window.location.reload();
                     }, 1000);
+                } else {
+                    addSystemMessage('You are already THE_CREATOR');
                 }
                 return true;
             }
