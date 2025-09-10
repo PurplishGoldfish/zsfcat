@@ -211,6 +211,11 @@
             margin: 10px 0;
             font-size: 0.9em;
         }
+        .wallet-connected {
+            color: #4cc9f0;
+            margin-left: 10px;
+            font-size: 0.9em;
+        }
     </style>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -220,7 +225,7 @@
 </head>
 <body>
     <div class="info-panel">
-        <div>zsfcat</div>
+        <div>zsfcat <span id="wallet-status" class="wallet-connected"></span></div>
         <div class="capacity-info">Screen capacity: <span id="capacity">calculating...</span> messages</div>
     </div>
     
@@ -236,13 +241,14 @@
 
     <div class="overlay" id="overlay"></div>
     <div class="donation-modal" id="donation-modal">
-        <h3><img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDIyQzE3LjUyMjggMjIgMjIgMTcuNTyMjggMjIgMTJDMjIgNi40NzcxNSAxNy41MjI4IDIgMTIgMkM2LjQ3NzE1IDIgMiA2LjQ3NzE1IDIgMTJDMiAxNy41MjI4IDYuNDc3MTUgMjIgMTIgMjJaIiBmaWxsPSIjNEJBNEZGIi8+CjxwYXRoIGQ9Ik0xMi44ODU3IDYuNTg1NzFDMTIuODg1NyA2LjU4NTcxIDE1LjAyODYgNy4zNDI4NiAxNS4wMjg2IDkuNDg3MTRDMTUuMDI4NiAxMS42MzE0IDEyLjg4NTcgMTIuMzg4NiAxMi44ODU3IDEyLjM4ODZDMTIuODg1NyAxMi4zODg2IDEwLjc0MjkgMTEuNjMxNCAxMC43NDI5IDkuNDg3MTRDMTAuNzQyOSA3LjM0Mjg2IDEyLjg4NTcgNi41ODU3MSAxMi44ODU3IDYuNTg1NzFaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNNy44MTQyOSAxMC42Mjg2QzcuODE0MjkgMTAuNjI4NiA5LjExNDI5IDExLjExNDMgOS4xMTQyOSAxMi41NDI5QzkuMTE0MjkgMTMuOTcxNCA3LjgxNDI5IDE0LjQ1NzEgNy44MTQyOSAxNC40NTcxQzcuODE0MjkgMTQuNDU3MSA2LjUxNDI5IDEzLjk3MTQgNi41MTQyOSAxMi41NDI5QzYuNTE0MjkgMTEuMTE0MyA3LjgxNDI5IDEwLjYyODYgNy44MTQyOSAxMC42Mjg2WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTE3Ljk0MjkgMTAuNjI4NkMxNy45NDI5IDEwLjYyODYgMTkuMjQyOSAxMS4xMTQzIDE5LjI0MjkgMTIuNTQyOUMxOS4yNDI5IDEzLjk3MTQgMTcuOTQyOSAxNC40NTcxIDE3Ljk0MjkgMTQuNDU3MUMxNy45NDI5IDE0LjQ1NzEgMTYuNjQyOSAxMy45NzE0IDE2LjY0MjkgMTIuNTQyOUMxNi42NDI5IDExLjExNDMgMTcuOTQyOSAxMC42Mjg2IDE3Ljk0MjkgMTAuNjI4NloiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=" class="phantom-logo">Donate via Phantom Wallet</h3>
+        <h3><img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDIyQzE3LjUyMjggMjIgMjIgMTcuNTIyOCAyMiAxMkMyMiA2LjQ3NzE1IDE3LjUyMjggMiAxMiAyQzYuNDc3MTUgMiAyIDYuNDc3MTUgMiAxMkMyIDE3LjUyMjggNi40NzcxNSAyMiAxMiAyMloiIGZpbGw9IiM0QkE0RkYiLz4KPHBhdGggZD0iTTEyLjg4NTcgNi41ODU3MUMxMi44ODU3IDYuNTg1NzEgMTUuMDI4NiA3LjM0Mjg2IDE1LjAyODYgOS40ODcxNEMxNS4wMjg2IDExLjYzMTQgMTIuODg1NyAxMi4zODg2IDEyLjg4NTcgMTIuMzg4NkMxMi44ODU3IDEyLjM4ODYgMTAuNzQyOSAxMS42MzE0IDEwLjc0MjkgOS40ODcxNEMxMC43NDI5IDcuMzQyODYgMTIuODg1NyA2LjU4NTcxIDEyLjg4NTcgNi41ODU3MVoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik03LjgxNDI5IDEwLjYyODZDNy44MTQyOSAxMC42Mjg2IDkuMTE0MjkgMTEuMTE0MyA5LjExNDI5IDEyLjU0MjlDOS4xMTQyOSAxMy45NzE0IDcuODE0MjkgMTQuNDU3MSA3LjgxNDI5IDE0LjQ1NzFDNy44MTQyOSAxNC40NTcxIDYuNTE0MjkgMTMuOTcxNCA2LjUxNDI5IDEyLjU0MjlDNi41MTQyOSAxMS4xMTQzIDcuODE0MjkgMTAuNjI4NiA3LjgxNDI5IDEwLjYyODZaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTcuOTQyOSAxMC42Mjg2QzE3Ljk0MjkgMTAuNjI4NiAxOS4yNDI5IDExLjExNDMgMTkuMjQyOSAxMi41NDI5QzE5LjI0MjkgMTMuOTcxNCAxNy45NDI5IDE0LjQ1NzEgMTcuOTQyOSAxNC40NTcxQzE3Ljk0MjkgMTQuNDU3MSAxNi42NDI5IDEzLjk3MTQgMTYuNjQyOSAxMi41NDI5QzE2LjY0MjkgMTEuMTE0MyAxNy45NDI5IDEwLjYyODYgMTcuOTQyOSAxMC42Mjg2WiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cg==" class="phantom-logo">Donate via Phantom Wallet</h3>
         <div id="donation-status" class="donation-status status-waiting">Preparing transaction...</div>
         <p>Send <span id="donation-amount">0</span> SOL to support zsfcat</p>
         
         <div class="transaction-details">
             <div>Recipient: <span id="recipient-address">Loading...</span></div>
             <div>Network: <span id="network-info">Solana Mainnet</span></div>
+            <div>Your Address: <span id="user-address">Not connected</span></div>
         </div>
         
         <div id="transaction-progress">
@@ -285,6 +291,7 @@
         let phantomProvider = null;
         let transactionSignature = null;
         let donationInterval = null;
+        let userPublicKey = null;
 
         // Recipient wallet address (replace with your own)
         const recipientAddress = "H8o2dz7o2g1fQhDB2h2KqNXj8V2h2KqNXj8V2h2KqNXj8V";
@@ -407,6 +414,10 @@
             document.getElementById('donation-modal').style.display = 'block';
             document.getElementById('overlay').style.display = 'block';
             updateDonationStatus('waiting', 'Ready to initiate transaction');
+            
+            if (userPublicKey) {
+                document.getElementById('user-address').textContent = userPublicKey.toString().substring(0, 8) + '...' + userPublicKey.toString().substring(userPublicKey.toString().length - 8);
+            }
         }
 
         function closeDonationModal() {
@@ -425,98 +436,93 @@
         }
 
         async function checkPhantomInstalled() {
-            if (window.solana && window.solana.isPhantom) {
-                return window.solana;
-            }
+            const provider = window.solana || window.phantom?.solana;
             
-            if (window.phantom && window.phantom.solana) {
-                return window.phantom.solana;
+            if (provider?.isPhantom) {
+                return provider;
             }
             
             window.open("https://phantom.app/", "_blank");
             throw new Error("Phantom Wallet not installed");
         }
 
-        async function initiateDonation() {
+        async function connectPhantom() {
             try {
-                updateDonationStatus('processing', 'Checking Phantom Wallet...');
-                
                 phantomProvider = await checkPhantomInstalled();
                 
+                if (!phantomProvider.isConnected) {
+                    await phantomProvider.connect();
+                }
+                
+                userPublicKey = phantomProvider.publicKey;
+                document.getElementById('wallet-status').textContent = `Wallet: ${userPublicKey.toString().substring(0, 4)}...${userPublicKey.toString().substring(userPublicKey.toString().length - 4)}`;
+                
+                return true;
+            } catch (error) {
+                document.getElementById('wallet-status').textContent = 'Wallet: Not connected';
+                console.error("Error connecting to Phantom:", error);
+                return false;
+            }
+        }
+
+        async function initiateDonation() {
+            try {
                 updateDonationStatus('processing', 'Connecting to Phantom...');
                 
-                try {
-                    await phantomProvider.connect();
-                    const publicKey = phantomProvider.publicKey.toString();
-                    
-                    updateDonationStatus('processing', 'Preparing transaction...');
-                    
-                    // Create a simple transfer transaction
-                    const transaction = {
-                        to: recipientAddress,
-                        from: publicKey,
-                        amount: donationAmount,
-                    };
-                    
-                    updateDonationStatus('processing', 'Please confirm transaction in Phantom...');
-                    
-                    // In a real implementation, you would create and send an actual transaction
-                    // This simulates the transaction flow but uses real Phantom detection
-                    simulateTransactionWithPhantom();
-                    
-                } catch (error) {
-                    updateDonationStatus('error', 'Connection failed: ' + error.message);
+                const isConnected = await connectPhantom();
+                if (!isConnected) {
+                    updateDonationStatus('error', 'Failed to connect to Phantom Wallet');
+                    return;
                 }
+                
+                updateDonationStatus('processing', 'Preparing transaction...');
+                
+                // Create a transaction
+                const transaction = new solanaWeb3.Transaction().add(
+                    solanaWeb3.SystemProgram.transfer({
+                        fromPubkey: userPublicKey,
+                        toPubkey: new solanaWeb3.PublicKey(recipientAddress),
+                        lamports: donationAmount * solanaWeb3.LAMPORTS_PER_SOL,
+                    })
+                );
+                
+                transaction.feePayer = userPublicKey;
+                
+                // Get the latest blockhash
+                const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'));
+                const { blockhash } = await connection.getLatestBlockhash();
+                transaction.recentBlockhash = blockhash;
+                
+                updateDonationStatus('processing', 'Please confirm transaction in Phantom...');
+                
+                // Request Phantom to sign and send the transaction
+                const signature = await phantomProvider.signAndSendTransaction(transaction);
+                transactionSignature = signature;
+                
+                updateDonationStatus('processing', 'Transaction sent. Waiting for confirmation...');
+                
+                // Confirm transaction
+                const confirmation = await connection.confirmTransaction(signature, 'confirmed');
+                
+                if (confirmation.value.err) {
+                    throw new Error('Transaction failed: ' + confirmation.value.err);
+                }
+                
+                updateDonationStatus('success', 'Transaction confirmed! Thank you for your donation!');
+                
+                // Mark user as donor
+                donorUsers[username] = true;
+                setCookie('user_donor', 'true', 365);
+                
+                setTimeout(() => {
+                    addSystemMessage(`Thank you ${username} for donating ${donationAmount} SOL! You've received a DONOR badge.`);
+                    closeDonationModal();
+                }, 2000);
+                
             } catch (error) {
-                updateDonationStatus('error', error.message);
+                console.error("Transaction error:", error);
+                updateDonationStatus('error', 'Error: ' + error.message);
             }
-        }
-
-        function simulateTransactionWithPhantom() {
-            // Simulate transaction initiation
-            transactionSignature = "txn_" + Math.random().toString(36).substring(2, 15);
-            
-            updateDonationStatus('processing', 'Transaction initiated. Waiting for confirmation...');
-            
-            // Check if Phantom is responding to transaction
-            checkTransactionStatus();
-            
-            // Set up interval to check transaction status
-            donationInterval = setInterval(checkTransactionStatus, 3000);
-        }
-
-        function checkTransactionStatus() {
-            // Simulate different stages of transaction processing
-            const statuses = [
-                'Transaction submitted to network...',
-                'Waiting for block confirmation...',
-                'Transaction confirmed. Processing...',
-                'Finalizing transaction...'
-            ];
-            
-            const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-            updateDonationStatus('processing', randomStatus);
-            
-            // Randomly complete the transaction
-            if (Math.random() > 0.7) {
-                completeDonation();
-            }
-        }
-
-        function completeDonation() {
-            if (donationInterval) {
-                clearInterval(donationInterval);
-                donationInterval = null;
-            }
-            
-            donorUsers[username] = true;
-            setCookie('user_donor', 'true', 365);
-            updateDonationStatus('success', 'Donation successful! Thank you!');
-            
-            setTimeout(() => {
-                addSystemMessage(`Thank you ${username} for donating ${donationAmount} SOL! You've received a DONOR badge.`);
-                closeDonationModal();
-            }, 2000);
         }
 
         function isUserDonor(username) {
@@ -699,6 +705,13 @@
                 
                 if (getCookie('user_donor') === 'true') {
                     donorUsers[username] = true;
+                }
+                
+                // Try to auto-connect to Phantom
+                try {
+                    await connectPhantom();
+                } catch (error) {
+                    console.log("Phantom not available or user declined connection");
                 }
                 
                 loadMessages();
