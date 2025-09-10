@@ -49,6 +49,24 @@
             text-align: center;
             margin: 10px 0;
         }
+        .warning-message {
+            color: #FFA500;
+            font-style: italic;
+            text-align: center;
+            margin: 10px 0;
+            border: 1px solid #FFA500;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        .moderator-message {
+            color: #00BFFF;
+            font-style: italic;
+            text-align: center;
+            margin: 10px 0;
+            border: 1px solid #00BFFF;
+            padding: 5px;
+            border-radius: 4px;
+        }
         #input-container {
             display: flex;
             gap: 10px;
@@ -96,6 +114,14 @@
             margin-top: 5px;
             text-align: center;
         }
+        .creator-badge {
+            background: linear-gradient(45deg, #FF0000, #FF8C00, #FFD700);
+            color: black;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-left: 5px;
+        }
     </style>
     
     <!-- Firebase SDK -->
@@ -114,7 +140,7 @@
             <input type="text" id="message-input" placeholder="Type your message...">
             <button id="send-button">Send</button>
         </div>
-        <div class="command-help">Type "blankslate" to clear all message history</div>
+        <div class="command-help">Type /help for available commands</div>
         <div id="status">Setting up Firebase...</div>
     </div>
 
@@ -144,6 +170,10 @@
 
         // Store user color mappings
         const userColorMap = {};
+        
+        // Store muted and banned users with timestamps
+        const mutedUsers = {};
+        const bannedUsers = {};
 
         // Cookie functions
         function setCookie(name, value, days) {
@@ -198,6 +228,111 @@
                 userColorMap[username] = usernameColors[colorIndex];
             }
             return userColorMap[username];
+        }
+
+        // Simple AI moderation - checks for NSFW words
+        function checkForNSFW(content) {
+            const nsfwWords = [
+                'fuck', 'shit', 'asshole', 'bitch', 'cunt', 'dick', 'pussy', 
+                'nigger', 'nigga', 'faggot', 'whore', 'slut', 'cock', 'porn',
+                'sex', 'anal', 'blowjob', 'tits', 'boobs', 'hentai', 'xxx'
+            ];
+            
+            const words = content.toLowerCase().split(/\s+/);
+            return words.some(word => nsfwWords.includes(word));
+        }
+
+        // Check if user is muted
+        function isUserMuted(username) {
+            if (mutedUsers[username] && mutedUsers[username] > Date.now()) {
+                return true;
+            }
+            // Clean up expired mutes
+            if (mutedUsers[username] && mutedUsers[username] <= Date.now()) {
+                delete mutedUsers[username];
+            }
+            return false;
+        }
+
+        // Check if user is banned
+        function isUserBanned(username) {
+            if (bannedUsers[username] && bannedUsers[username] > Date.now()) {
+                return true;
+            }
+            // Clean up expired bans
+            if (bannedUsers[username] && bannedUsers[username] <= Date.now()) {
+                delete bannedUsers[username];
+            }
+            return false;
+        }
+
+        // Mute a user for specified minutes
+        function muteUser(username, minutes) {
+            const muteTime = Date.now() + (minutes * 60 * 1000);
+            mutedUsers[username] = muteTime;
+            return muteTime;
+        }
+
+        // Ban a user for specified days
+        function banUser(username, days) {
+            const banTime = Date.now() + (days * 24 * 60 * 60 * 1000);
+            bannedUsers[username] = banTime;
+            return banTime;
+        }
+
+        // Process secret commands
+        function processCommand(command, originalUsername) {
+            const parts = command.split('_');
+            
+            // /blankslate command
+            if (command === '/blankslate') {
+                clearAllMessages();
+                return true;
+            }
+            
+            // /i_am_the_creator command
+            if (command === '/i_am_the_creator') {
+                if (originalUsername !== 'THE_CREATOR') {
+                    setCookie('chat_username', 'THE_CREATOR', 365);
+                    addSystemMessage(`${originalUsername} has been promoted to THE_CREATOR`);
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                }
+                return true;
+            }
+            
+            // /mute_[username]_[time] command
+            if (parts[0] === '/mute' && parts.length === 3) {
+                const targetUser = parts[1];
+                const minutes = parseInt(parts[2]);
+                
+                if (!isNaN(minutes) && minutes > 0) {
+                    const muteTime = muteUser(targetUser, minutes);
+                    addSystemMessage(`${targetUser} has been muted for ${minutes} minutes`);
+                    return true;
+                }
+            }
+            
+            // /ban_[username]_[time] command
+            if (parts[0] === '/ban' && parts.length === 3) {
+                const targetUser = parts[1];
+                const days = parseInt(parts[2]);
+                
+                if (!isNaN(days) && days > 0) {
+                    const banTime = banUser(targetUser, days);
+                    addSystemMessage(`${targetUser} has been banned for ${days} days`);
+                    return true;
+                }
+            }
+            
+            // /help command
+            if (command === '/help') {
+                addSystemMessage('Available commands: /blankslate, /i_am_the_creator, /mute_[user]_[mins], /ban_[user]_[days]');
+                return true;
+            }
+            
+            return false;
         }
 
         // Calculate screen message capacity
@@ -269,6 +404,26 @@
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
+        // Add a warning message to the chat
+        function addWarningMessage(text) {
+            const messagesContainer = document.getElementById('messages');
+            const warningMessage = document.createElement('div');
+            warningMessage.className = 'warning-message';
+            warningMessage.textContent = text;
+            messagesContainer.appendChild(warningMessage);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Add a moderator message to the chat
+        function addModeratorMessage(text) {
+            const messagesContainer = document.getElementById('messages');
+            const moderatorMessage = document.createElement('div');
+            moderatorMessage.className = 'moderator-message';
+            moderatorMessage.textContent = text;
+            messagesContainer.appendChild(moderatorMessage);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
         // Initialize chat
         let username = '';
         let screenCapacity = 20; // Default, will be updated
@@ -325,13 +480,19 @@
                     messageElement.innerHTML = `
                         <div class="system-message">${msg.text}</div>
                     `;
+                } else if (msg.user === "Moderator") {
+                    messageElement.innerHTML = `
+                        <div class="moderator-message">${msg.text}</div>
+                    `;
                 } else {
                     // Get color for this username
                     const userColor = getColorForUsername(msg.user);
+                    const isCreator = msg.user === 'THE_CREATOR';
                     
                     messageElement.innerHTML = `
-                        <span class="username" style="color: ${userColor}">${msg.user}:</span> 
-                        ${msg.text}
+                        <span class="username" style="color: ${userColor}">${msg.user}</span>
+                        ${isCreator ? '<span class="creator-badge">CREATOR</span>' : ''}
+                        <span>: ${msg.text}</span>
                         <span class="timestamp">${msg.time}</span>
                     `;
                 }
@@ -349,24 +510,47 @@
             
             if (text) {
                 try {
-                    // Check if the message is the special command
-                    if (text.toLowerCase() === 'blankslate') {
-                        addSystemMessage(`Clearing all messages...`);
-                        const success = await clearAllMessages();
-                        if (success) {
-                            addSystemMessage(`Chat history has been cleared by ${username}`);
-                        } else {
-                            addSystemMessage(`Failed to clear chat history. Please try again.`);
-                        }
-                    } else {
-                        // Regular message
-                        await db.collection("messages").add({
-                            user: username,
-                            text: text,
-                            time: new Date().toLocaleTimeString(),
-                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                        });
+                    // Check if user is banned
+                    if (isUserBanned(username)) {
+                        addWarningMessage('You are banned and cannot send messages');
+                        input.value = '';
+                        return;
                     }
+                    
+                    // Check if user is muted
+                    if (isUserMuted(username)) {
+                        addWarningMessage('You are muted and cannot send messages');
+                        input.value = '';
+                        return;
+                    }
+                    
+                    // Check for commands
+                    if (text.startsWith('/')) {
+                        const isCommand = processCommand(text, username);
+                        input.value = '';
+                        if (isCommand) return;
+                    }
+                    
+                    // AI Moderation - Check for NSFW content
+                    if (checkForNSFW(text)) {
+                        // Add warning message
+                        addModeratorMessage(`Moderator: Message from ${username} was flagged as NSFW and removed`);
+                        
+                        // Mute user for 5 minutes for NSFW content
+                        muteUser(username, 5);
+                        addSystemMessage(`${username} has been muted for 5 minutes for NSFW content`);
+                        
+                        input.value = '';
+                        return;
+                    }
+                    
+                    // Regular message
+                    await db.collection("messages").add({
+                        user: username,
+                        text: text,
+                        time: new Date().toLocaleTimeString(),
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
                     
                     input.value = '';
                 } catch (error) {
