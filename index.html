@@ -149,7 +149,6 @@
     </div>
 
     <script>
-        // Your Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBQNZZ3NYi9-KQ1arau07DWl_aKFb7c370",
             authDomain: "zsfcat-b5759.firebaseapp.com",
@@ -160,32 +159,21 @@
             appId: "1:482157676967:web:92fc8f1e1d1dc759cd0e82",
             measurementId: "G-2GT8MRSMQJ"
         };
-
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-
-        // Predefined set of colors for usernames
         const usernameColors = [
             '#FF6B6B', '#4ECDC4', '#FFE66D', '#6B5B95', '#88D8B0',
             '#FFA69E', '#70D6FF', '#F9C80E', '#A4036F', '#048BA8',
             '#16DB93', '#EFEA5A', '#F29E4C', '#ED6A5A', '#9BC53D'
         ];
-
-        // Store user color mappings
         const userColorMap = {};
-        
-        // Store muted and banned users with timestamps
         const mutedUsers = {};
         const bannedUsers = {};
-
-        // Cookie functions
         function setCookie(name, value, days) {
             const expires = new Date();
             expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
             document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Strict`;
         }
-
         function getCookie(name) {
             const nameEQ = name + "=";
             const ca = document.cookie.split(';');
@@ -196,8 +184,6 @@
             }
             return null;
         }
-
-        // Generate a random username
         function generateRandomUsername() {
             const adjectives = ['Swift', 'Clever', 'Mystic', 'Silent', 'Brave', 'Fierce', 'Gentle', 'Nimble', 'Wise', 'Sly'];
             const nouns = ['Fox', 'Wolf', 'Eagle', 'Dragon', 'Phoenix', 'Lion', 'Tiger', 'Bear', 'Hawk', 'Falcon'];
@@ -208,8 +194,6 @@
             
             return `${adjectives[adjIndex]}${nouns[nounIndex]}${number}`;
         }
-
-        // Get or create username from cookie (cannot be changed)
         function getUsername() {
             let username = getCookie('chat_username');
             if (!username) {
@@ -218,15 +202,12 @@
             }
             return username;
         }
-
-        // Get a color for a username
         function getColorForUsername(username) {
             if (username === 'THE_CREATOR') {
                 return '#00FFFF'; // Cyan for THE_CREATOR
             }
             
             if (!userColorMap[username]) {
-                // Generate a consistent index based on username
                 let hash = 0;
                 for (let i = 0; i < username.length; i++) {
                     hash = ((hash << 5) - hash) + username.charCodeAt(i);
@@ -237,8 +218,6 @@
             }
             return userColorMap[username];
         }
-
-        // Simple AI moderation - checks for NSFW words
         function checkForNSFW(content) {
             const nsfwWords = [
                 'fuck', 'shit', 'asshole', 'bitch', 'cunt', 'dick', 'pussy', 
@@ -257,7 +236,6 @@
             if (mutedUsers[username] && mutedUsers[username] > Date.now()) {
                 return true;
             }
-            // Clean up expired mutes
             if (mutedUsers[username] && mutedUsers[username] <= Date.now()) {
                 delete mutedUsers[username];
             }
@@ -271,7 +249,6 @@
             if (bannedUsers[username] && bannedUsers[username] > Date.now()) {
                 return true;
             }
-            // Clean up expired bans
             if (bannedUsers[username] && bannedUsers[username] <= Date.now()) {
                 delete bannedUsers[username];
             }
@@ -302,7 +279,6 @@
             return banTime;
         }
 
-        // Process secret commands
         function processCommand(command, originalUsername) {
             const parts = command.split('_');
             
@@ -398,7 +374,6 @@
             return capacity;
         }
 
-        // Clear all messages from Firestore
         async function clearAllMessages() {
             try {
                 // Get all messages
@@ -466,17 +441,12 @@
 
         async function initializeChat() {
             try {
-                // Get username from cookie or generate a new one (cannot be changed)
                 username = getUsername();
                 document.getElementById('status').textContent = `Connected as ${username}`;
-                
-                // Calculate initial screen capacity
                 screenCapacity = calculateScreenCapacity();
-                
-                // Recalculate on window resize
                 window.addEventListener('resize', () => {
                     screenCapacity = calculateScreenCapacity();
-                    loadMessages(); // Reload with new capacity
+                    loadMessages(); 
                 });
                 
                 loadMessages();
@@ -486,7 +456,7 @@
             }
         }
 
-        // Load messages from Firebase
+
         function loadMessages() {
             db.collection("messages")
                 .orderBy("timestamp", "desc")
@@ -580,7 +550,6 @@
                         return;
                     }
                     
-                    // Regular message
                     await db.collection("messages").add({
                         user: username,
                         text: text,
@@ -595,7 +564,7 @@
             }
         }
 
-        // Event listeners
+
         document.getElementById('send-button').addEventListener('click', sendMessage);
         
         document.getElementById('message-input').addEventListener('keypress', function(e) {
@@ -604,7 +573,6 @@
             }
         });
 
-        // Initialize when page loads
         window.addEventListener('load', initializeChat);
     </script>
 </body>
