@@ -1,230 +1,269 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>zsfcat</title>
-    <style>
-        body {
-            background-color: black;
-            color: white;
-            font-family: monospace;
-            margin: 0;
-            padding: 20px;
-            height: 100vh;
-            overflow: hidden;
-        }
-        #chat-container { display: flex; flex-direction: column; height: 100%; }
-        #messages { flex-grow: 1; overflow-y: auto; padding: 10px 0; border-bottom: 1px solid #333; margin-bottom: 10px; }
-        .message { margin-bottom: 10px; line-height: 1.4; padding: 5px; border-radius: 4px; }
-        .message:hover { background-color: #111; }
-        .username { font-weight: bold; }
-        .timestamp { color: #888; font-size: 0.8em; margin-left: 10px; }
-        .system-message { color: #FF6B6B; font-style: italic; text-align: center; margin: 10px 0; }
-        .warning-message { color: #FFA500; font-style: italic; text-align: center; margin: 10px 0; border: 1px solid #FFA500; padding: 5px; border-radius: 4px; }
-        .moderator-message { color: #00BFFF; font-style: italic; text-align: center; margin: 10px 0; border: 1px solid #00BFFF; padding: 5px; border-radius: 4px; }
-        #input-container { display: flex; gap: 10px; }
-        #message-input { flex-grow: 1; background: #222; color: white; border: 1px solid #444; padding: 10px; font-family: monospace; }
-        #send-button { background: #222; color: white; border: 1px solid #444; padding: 10px 20px; cursor: pointer; font-family: monospace; }
-        #send-button:hover { background: #333; }
-        #status { color: #888; font-size: 0.9em; margin-top: 10px; text-align: center; }
-        .info-panel { background: #222; padding: 10px; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
-        .capacity-info { color: #4cc9f0; }
-        .command-help { color: #888; font-size: 0.9em; margin-top: 5px; text-align: center; }
-        .creator-badge { background: linear-gradient(45deg, #00FFFF, #008B8B); color: black; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 5px; }
-        .creator-theme { color: #00FFFF !important; text-shadow: 0 0 5px #00FFFF, 0 0 10px #00FFFF; }
-        .donor-badge { background: linear-gradient(45deg, #FFA500, #FFD700); color: black; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 5px; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Village Market - Chat & Donations</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f1e8;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
 
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <!-- Solana Web3 -->
-    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
+    .chat-container {
+      background: #fff;
+      width: 95%;
+      max-width: 600px;
+      height: 95vh;
+      display: flex;
+      flex-direction: column;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+
+    .chat-box {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+      font-size: 0.95rem;
+      word-wrap: break-word;
+    }
+
+    .chat-input {
+      display: flex;
+      border-top: 1px solid #ddd;
+    }
+
+    .chat-input input {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      outline: none;
+      font-size: 1rem;
+    }
+
+    .chat-input button {
+      padding: 10px 16px;
+      border: none;
+      background: #6b8e23;
+      color: #fff;
+      cursor: pointer;
+      font-size: 1rem;
+      border-radius: 0;
+    }
+
+    .chat-input button:hover {
+      background: #556b2f;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #ffd700;
+      color: #000;
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 6px;
+      margin-left: 4px;
+    }
+
+    /* Donation modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 10;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .modal-content button {
+      margin-top: 12px;
+      padding: 10px 14px;
+      border: none;
+      border-radius: 8px;
+      background: #6b8e23;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .modal-content button:hover {
+      background: #556b2f;
+    }
+
+    @media (max-width: 480px) {
+      .chat-box {
+        font-size: 0.85rem;
+      }
+      .chat-input input {
+        font-size: 0.9rem;
+      }
+      .chat-input button {
+        font-size: 0.9rem;
+        padding: 8px 12px;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="info-panel">
-        <div>zsfcat</div>
-        <div class="capacity-info">Screen capacity: <span id="capacity">calculating...</span> messages</div>
+  <div class="chat-container">
+    <div class="chat-box" id="chat-box"></div>
+    <div class="chat-input">
+      <input type="text" id="chat-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendMessage()">
+      <button onclick="sendMessage()">Send</button>
     </div>
-    
-    <div id="chat-container">
-        <div id="messages"></div>
-        <div id="input-container">
-            <input type="text" id="message-input" placeholder="Type your message...">
-            <button id="send-button">Send</button>
-        </div>
-        <div class="command-help">Type /help for available commands</div>
-        <div id="status">Setting up Firebase...</div>
+  </div>
+
+  <!-- Donation Modal -->
+  <div class="modal" id="donation-modal">
+    <div class="modal-content">
+      <h3>Confirm Donation</h3>
+      <p>Amount: <span id="donation-amount"></span> SOL</p>
+      <button onclick="confirmDonation()">Confirm with Phantom</button>
+      <button onclick="closeDonationModal()">Cancel</button>
     </div>
+  </div>
 
-    <script>
-        // Firebase Config
-        const firebaseConfig = {
-            apiKey: "AIzaSyBQNZZ3NYi9-KQ1arau07DWl_aKFb7c370",
-            authDomain: "zsfcat-b5759.firebaseapp.com",
-            databaseURL: "https://zsfcat-b5759-default-rtdb.firebaseio.com",
-            projectId: "zsfcat-b5759",
-            storageBucket: "zsfcat-b5759.firebasestorage.app",
-            messagingSenderId: "482157676967",
-            appId: "1:482157676967:web:92fc8f1e1d1dc759cd0e82",
-            measurementId: "G-2GT8MRSMQJ"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+  <script>
+    // --- Firebase Setup ---
+    const firebaseConfig = {
+      apiKey: "YOUR_FIREBASE_KEY",
+      authDomain: "YOUR_FIREBASE_DOMAIN",
+      databaseURL: "YOUR_FIREBASE_DB_URL",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_BUCKET",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-        // Globals
-        const usernameColors = ['#FF6B6B','#4ECDC4','#FFE66D','#6B5B95','#88D8B0','#FFA69E','#70D6FF','#F9C80E','#A4036F','#048BA8','#16DB93','#EFEA5A','#F29E4C','#ED6A5A','#9BC53D'];
-        const userColorMap = {};
-        const mutedUsers = {};
-        const bannedUsers = {};
-        const donorUsers = {};
-        let username = '';
-        let screenCapacity = 20;
+    const chatBox = document.getElementById("chat-box");
+    const inputBox = document.getElementById("chat-input");
 
-        // Cookies
-        function setCookie(name,value,days){
-            const expires = new Date();
-            expires.setTime(expires.getTime()+(days*24*60*60*1000));
-            document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Strict`;
-        }
-        function getCookie(name){
-            const nameEQ=name+"=";
-            const ca=document.cookie.split(';');
-            for(let i=0;i<ca.length;i++){
-                let c=ca[i];
-                while(c.charAt(0)===' ')c=c.substring(1,c.length);
-                if(c.indexOf(nameEQ)===0)return c.substring(nameEQ.length,c.length);
-            }
-            return null;
-        }
+    let username = "User" + Math.floor(Math.random()*1000);
+    let donorUsers = {};
+    let donationAmount = 0;
 
-        // Username
-        function generateRandomUsername(){
-            const adjectives=['Swift','Clever','Mystic','Silent','Brave','Fierce','Gentle','Nimble','Wise','Sly'];
-            const nouns=['Fox','Wolf','Eagle','Dragon','Phoenix','Lion','Tiger','Bear','Hawk','Falcon'];
-            return `${adjectives[Math.floor(Math.random()*adjectives.length)]}${nouns[Math.floor(Math.random()*nouns.length)]}${Math.floor(Math.random()*1000)}`;
-        }
-        function getUsername(){
-            let u=getCookie('chat_username');
-            if(!u){u=generateRandomUsername();setCookie('chat_username',u,365);}
-            return u;
-        }
-        function getColorForUsername(username){
-            if(username==='THE_CREATOR')return '#00FFFF';
-            if(!userColorMap[username]){
-                let hash=0;
-                for(let i=0;i<username.length;i++){hash=((hash<<5)-hash)+username.charCodeAt(i);hash=hash&hash;}
-                userColorMap[username]=usernameColors[Math.abs(hash)%usernameColors.length];
-            }
-            return userColorMap[username];
-        }
+    // --- Messages ---
+    function sendMessage() {
+      const msg = inputBox.value.trim();
+      if (!msg) return;
+      if (msg.startsWith("/donate_")) {
+        const amount = msg.split("_")[1];
+        openDonationModal(amount);
+      } else {
+        db.ref("messages").push({ user: username, text: msg });
+      }
+      inputBox.value = "";
+    }
 
-        // Messages
-        function addSystemMessage(t){const c=document.getElementById('messages');const m=document.createElement('div');m.className='system-message';m.textContent=t;c.appendChild(m);c.scrollTop=c.scrollHeight;}
-        function addWarningMessage(t){const c=document.getElementById('messages');const m=document.createElement('div');m.className='warning-message';m.textContent=t;c.appendChild(m);c.scrollTop=c.scrollHeight;}
-        function addModeratorMessage(t){const c=document.getElementById('messages');const m=document.createElement('div');m.className='moderator-message';m.textContent=t;c.appendChild(m);c.scrollTop=c.scrollHeight;}
+    function addMessage(user, text) {
+      const div = document.createElement("div");
+      div.innerHTML = `<b>${user}</b>${donorUsers[user] ? ' <span class="badge">DONOR</span>' : ''}: ${text}`;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
 
-        // Muting / banning
-        function isUserMuted(u){return mutedUsers[u]&&mutedUsers[u]>Date.now();}
-        function isUserBanned(u){return bannedUsers[u]&&bannedUsers[u]>Date.now();}
-        function muteUser(u,min){mutedUsers[u]=Date.now()+(min*60*1000);}
-        function banUser(u,days){bannedUsers[u]=Date.now()+(days*24*60*60*1000);}
-        function isUserDonor(u){return donorUsers[u]||getCookie('user_donor')==='true';}
+    function addSystemMessage(text) {
+      const div = document.createElement("div");
+      div.style.color = "gray";
+      div.textContent = text;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
 
-        // Phantom connect
-        async function connectPhantom(){
-            if(!window.solana||!window.solana.isPhantom){addWarningMessage("Phantom not found.");return null;}
-            try{const resp=await window.solana.connect();return resp.publicKey.toString();}
-            catch(e){addWarningMessage("Phantom connection failed.");return null;}
-        }
+    function addWarningMessage(text) {
+      const div = document.createElement("div");
+      div.style.color = "red";
+      div.textContent = text;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
 
-        // Donation via Phantom
-        async function donateWithPhantom(amount){
-            const recipient="7Ga6TYqsf6pnWf5h6ZkJDdoBXC3NDvrzx7whH99ais6D"; // your SOL address
-            const pubkey=await connectPhantom(); if(!pubkey)return;
-            try{
-                const provider=window.solana;
-                const connection=new solanaWeb3.Connection(solanaWeb3.clusterApiUrl("mainnet-beta"),"confirmed");
-                const transaction=new solanaWeb3.Transaction().add(
-                    solanaWeb3.SystemProgram.transfer({
-                        fromPubkey:new solanaWeb3.PublicKey(pubkey),
-                        toPubkey:new solanaWeb3.PublicKey(recipient),
-                        lamports:solanaWeb3.LAMPORTS_PER_SOL*parseFloat(amount)
-                    })
-                );
-                transaction.feePayer=new solanaWeb3.PublicKey(pubkey);
-                transaction.recentBlockhash=(await connection.getRecentBlockhash()).blockhash;
-                const signed=await provider.signTransaction(transaction);
-                await connection.sendRawTransaction(signed.serialize());
-                donorUsers[username]=true; setCookie('user_donor','true',365);
-                addSystemMessage(`Thank you ${username} for donating ${amount} SOL! You've received a DONOR badge.`);
-            }catch(e){addWarningMessage("Transaction failed.");}
-        }
+    // --- Donation Modal ---
+    function openDonationModal(amount) {
+      donationAmount = parseFloat(amount);
+      document.getElementById("donation-amount").textContent = donationAmount;
+      document.getElementById("donation-modal").style.display = "flex";
+    }
+    function closeDonationModal() {
+      document.getElementById("donation-modal").style.display = "none";
+    }
 
-        // Commands
-        function processCommand(command,originalUsername){
-            const parts=command.split('_');
-            if(command==='/blankslate'){clearAllMessages();return true;}
-            if(command==='/help'){addSystemMessage('Commands: /blankslate, /i_am_the_creator, /peasant, /donate_[amount], /mute_[user]_[mins], /ban_[user]_[days]');return true;}
-            if(parts[0]==='/donate'&&parts.length===2){
-                const amt=parseFloat(parts[1]);
-                if(!isNaN(amt)&&amt>0){donateWithPhantom(amt);return true;}
-            }
-            if(parts[0]==='/mute'&&parts.length===3){muteUser(parts[1],parseInt(parts[2]));addSystemMessage(`${parts[1]} muted`);return true;}
-            if(parts[0]==='/ban'&&parts.length===3){banUser(parts[1],parseInt(parts[2]));addSystemMessage(`${parts[1]} banned`);return true;}
-            return false;
-        }
+    // --- Phantom Connect ---
+    async function connectPhantom() {
+      if (!window.solana || !window.solana.isPhantom) {
+        addWarningMessage("Phantom Wallet not found. Please install Phantom.");
+        return null;
+      }
+      try {
+        const resp = await window.solana.connect();
+        return resp.publicKey.toString();
+      } catch (err) {
+        addWarningMessage("Connection to Phantom cancelled.");
+        return null;
+      }
+    }
 
-        // Chat init
-        function calculateScreenCapacity(){
-            const c=document.getElementById('messages');if(!c)return 20;
-            const test=document.createElement('div');test.className='message';test.innerHTML='<span class="username">Test:</span> Msg <span class="timestamp">00:00:00</span>';test.style.position='absolute';test.style.visibility='hidden';document.body.appendChild(test);
-            const h=test.offsetHeight;const ch=c.offsetHeight;document.body.removeChild(test);
-            const cap=Math.max(10,Math.floor(ch/h));document.getElementById('capacity').textContent=cap;return cap;
-        }
-        function loadMessages(){
-            db.collection("messages").orderBy("timestamp","desc").limit(screenCapacity).onSnapshot((qs)=>{
-                const msgs=[];qs.forEach(doc=>msgs.push(doc.data()));displayMessages(msgs.reverse());
-            });
-        }
-        function displayMessages(msgs){
-            const c=document.getElementById('messages');c.innerHTML='';
-            msgs.forEach(m=>{
-                const e=document.createElement('div');e.className='message';
-                if(m.user==="System"){e.innerHTML=`<div class="system-message">${m.text}</div>`;}
-                else{const col=getColorForUsername(m.user);const isC=m.user==='THE_CREATOR';const isD=isUserDonor(m.user);
-                    e.innerHTML=`<span class="username ${isC?'creator-theme':''}" style="color:${col}">${m.user}</span>${isC?'<span class="creator-badge">CREATOR</span>':''}${isD?'<span class="donor-badge">DONOR</span>':''}<span>: ${m.text}</span><span class="timestamp">${m.time}</span>`;
-                }c.appendChild(e);
-            });c.scrollTop=c.scrollHeight;
-        }
-        async function clearAllMessages(){
-            const qs=await db.collection("messages").orderBy("timestamp","desc").get();
-            const dels=[];qs.forEach(doc=>dels.push(doc.ref.delete()));await Promise.all(dels);
-            await db.collection("messages").add({user:"System",text:`Chat cleared by ${username}`,time:new Date().toLocaleTimeString(),timestamp:firebase.firestore.FieldValue.serverTimestamp()});
-        }
+    // --- Confirm Donation ---
+    async function confirmDonation() {
+      const recipient = "7Ga6TYqsf6pnWf5h6ZkJDdoBXC3NDvrzx7whH99ais6D"; // your wallet
+      const pubkey = await connectPhantom();
+      if (!pubkey) return;
 
-        async function sendMessage(){
-            const input=document.getElementById('message-input');const text=input.value.trim();
-            if(!text)return;
-            if(isUserBanned(username)){addWarningMessage('You are banned');input.value='';return;}
-            if(isUserMuted(username)){addWarningMessage('You are muted');input.value='';return;}
-            if(text.startsWith('/')){if(processCommand(text,username)){input.value='';return;}}
-            await db.collection("messages").add({user:username,text:text,time:new Date().toLocaleTimeString(),timestamp:firebase.firestore.FieldValue.serverTimestamp()});
-            input.value='';
-        }
+      try {
+        const provider = window.solana;
+        const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl("mainnet-beta"), "confirmed");
 
-        async function initializeChat(){
-            username=getUsername();
-            document.getElementById('status').textContent=`Connected as ${username}`;
-            screenCapacity=calculateScreenCapacity();
-            if(getCookie('user_donor')==='true'){donorUsers[username]=true;}
-            loadMessages();
-        }
+        const transaction = new solanaWeb3.Transaction().add(
+          solanaWeb3.SystemProgram.transfer({
+            fromPubkey: new solanaWeb3.PublicKey(pubkey),
+            toPubkey: new solanaWeb3.PublicKey(recipient),
+            lamports: solanaWeb3.LAMPORTS_PER_SOL * donationAmount
+          })
+        );
 
-        document.getElementById('send-button').addEventListener('click',sendMessage);
-        document.getElementById('message-input').addEventListener('keypress',e=>{if(e.key==='Enter')sendMessage();});
-        window.addEventListener('load',initializeChat);
-    </script>
+        transaction.feePayer = new solanaWeb3.PublicKey(pubkey);
+        transaction.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
+
+        const signed = await provider.signTransaction(transaction);
+        await connection.sendRawTransaction(signed.serialize());
+
+        donorUsers[username] = true;
+        addSystemMessage(`Thank you ${username} for donating ${donationAmount} SOL! You've received a DONOR badge.`);
+        closeDonationModal();
+      } catch (err) {
+        addWarningMessage("Transaction failed or cancelled.");
+      }
+    }
+
+    // --- Load Messages ---
+    db.ref("messages").on("child_added", (snapshot) => {
+      const msg = snapshot.val();
+      addMessage(msg.user, msg.text);
+    });
+  </script>
 </body>
 </html>
