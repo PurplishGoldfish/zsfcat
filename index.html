@@ -104,7 +104,7 @@
 </head>
 <body>
     <div class="info-panel">
-        <div>Firebase Chat</div>
+        <div>zsfcat Chat</div>
         <div class="capacity-info">Screen capacity: <span id="capacity">calculating...</span> messages</div>
     </div>
     
@@ -145,26 +145,44 @@
         // Store user color mappings
         const userColorMap = {};
 
-        // Generate a username based on IP
-        async function generateUsername() {
-            try {
-                const response = await fetch('https://api.ipify.org?format=json');
-                const data = await response.json();
-                const ip = data.ip;
-                
-                const adjectives = ['Swift', 'Clever', 'Mystic', 'Silent', 'Brave', 'Fierce', 'Gentle', 'Nimble', 'Wise', 'Sly'];
-                const nouns = ['Fox', 'Wolf', 'Eagle', 'Dragon', 'Phoenix', 'Lion', 'Tiger', 'Bear', 'Hawk', 'Falcon'];
-                
-                const ipParts = ip.split('.');
-                const hash = ipParts.reduce((acc, part) => acc + parseInt(part), 0);
-                const adjIndex = hash % adjectives.length;
-                const nounIndex = (hash + parseInt(ipParts[0])) % nouns.length;
-                const number = (parseInt(ipParts[2]) * parseInt(ipParts[3])) % 1000;
-                
-                return `${adjectives[adjIndex]}${nouns[nounIndex]}${number}`;
-            } catch (error) {
-                return 'Guest' + Math.floor(Math.random() * 10000);
+        // Cookie functions
+        function setCookie(name, value, days) {
+            const expires = new Date();
+            expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Strict`;
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
             }
+            return null;
+        }
+
+        // Generate a random username
+        function generateRandomUsername() {
+            const adjectives = ['Swift', 'Clever', 'Mystic', 'Silent', 'Brave', 'Fierce', 'Gentle', 'Nimble', 'Wise', 'Sly'];
+            const nouns = ['Fox', 'Wolf', 'Eagle', 'Dragon', 'Phoenix', 'Lion', 'Tiger', 'Bear', 'Hawk', 'Falcon'];
+            
+            const adjIndex = Math.floor(Math.random() * adjectives.length);
+            const nounIndex = Math.floor(Math.random() * nouns.length);
+            const number = Math.floor(Math.random() * 1000);
+            
+            return `${adjectives[adjIndex]}${nouns[nounIndex]}${number}`;
+        }
+
+        // Get or create username from cookie (cannot be changed)
+        function getUsername() {
+            let username = getCookie('chat_username');
+            if (!username) {
+                username = generateRandomUsername();
+                setCookie('chat_username', username, 365);
+            }
+            return username;
         }
 
         // Get a color for a username
@@ -257,7 +275,8 @@
 
         async function initializeChat() {
             try {
-                username = await generateUsername();
+                // Get username from cookie or generate a new one (cannot be changed)
+                username = getUsername();
                 document.getElementById('status').textContent = `Connected as ${username}`;
                 
                 // Calculate initial screen capacity
