@@ -1,269 +1,665 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Village Market - Chat & Donations</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f1e8;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-
-    .chat-container {
-      background: #fff;
-      width: 95%;
-      max-width: 600px;
-      height: 95vh;
-      display: flex;
-      flex-direction: column;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      overflow: hidden;
-    }
-
-    .chat-box {
-      flex: 1;
-      padding: 10px;
-      overflow-y: auto;
-      font-size: 0.95rem;
-      word-wrap: break-word;
-    }
-
-    .chat-input {
-      display: flex;
-      border-top: 1px solid #ddd;
-    }
-
-    .chat-input input {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      outline: none;
-      font-size: 1rem;
-    }
-
-    .chat-input button {
-      padding: 10px 16px;
-      border: none;
-      background: #6b8e23;
-      color: #fff;
-      cursor: pointer;
-      font-size: 1rem;
-      border-radius: 0;
-    }
-
-    .chat-input button:hover {
-      background: #556b2f;
-    }
-
-    .badge {
-      display: inline-block;
-      background: #ffd700;
-      color: #000;
-      font-size: 0.7rem;
-      padding: 2px 6px;
-      border-radius: 6px;
-      margin-left: 4px;
-    }
-
-    /* Donation modal */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 10;
-      left: 0; top: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
-
-    .modal-content {
-      background: #fff;
-      padding: 20px;
-      border-radius: 12px;
-      width: 100%;
-      max-width: 400px;
-      text-align: center;
-    }
-
-    .modal-content button {
-      margin-top: 12px;
-      padding: 10px 14px;
-      border: none;
-      border-radius: 8px;
-      background: #6b8e23;
-      color: #fff;
-      cursor: pointer;
-    }
-
-    .modal-content button:hover {
-      background: #556b2f;
-    }
-
-    @media (max-width: 480px) {
-      .chat-box {
-        font-size: 0.85rem;
-      }
-      .chat-input input {
-        font-size: 0.9rem;
-      }
-      .chat-input button {
-        font-size: 0.9rem;
-        padding: 8px 12px;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>zsfcat</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: monospace;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            overflow: hidden;
+        }
+        #chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        #messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+            border-bottom: 1px solid #333;
+            margin-bottom: 10px;
+        }
+        .message {
+            margin-bottom: 10px;
+            line-height: 1.4;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        .message:hover {
+            background-color: #111;
+        }
+        .username {
+            font-weight: bold;
+        }
+        .timestamp {
+            color: #888;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+        .system-message {
+            color: #FF6B6B;
+            font-style: italic;
+            text-align: center;
+            margin: 10px 0;
+        }
+        .warning-message {
+            color: #FFA500;
+            font-style: italic;
+            text-align: center;
+            margin: 10px 0;
+            border: 1px solid #FFA500;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        .moderator-message {
+            color: #00BFFF;
+            font-style: italic;
+            text-align: center;
+            margin: 10px 0;
+            border: 1px solid #00BFFF;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        #input-container {
+            display: flex;
+            gap: 10px;
+        }
+        #message-input {
+            flex-grow: 1;
+            background: #222;
+            color: white;
+            border: 1px solid #444;
+            padding: 10px;
+            font-family: monospace;
+        }
+        #send-button {
+            background: #222;
+            color: white;
+            border: 1px solid #444;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-family: monospace;
+        }
+        #send-button:hover {
+            background: #333;
+        }
+        #status {
+            color: #888;
+            font-size: 0.9em;
+            margin-top: 10px;
+            text-align: center;
+        }
+        .info-panel {
+            background: #222;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .capacity-info {
+            color: #4cc9f0;
+        }
+        .command-help {
+            color: #888;
+            font-size: 0.9em;
+            margin-top: 5px;
+            text-align: center;
+        }
+        .creator-badge {
+            background: linear-gradient(45deg, #00FFFF, #008B8B);
+            color: black;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+        .creator-theme {
+            color: #00FFFF !important;
+            text-shadow: 0 0 5px #00FFFF, 0 0 10px #00FFFF;
+        }
+        .donor-badge {
+            background: linear-gradient(45deg, #FFA500, #FFD700);
+            color: black;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+        .donation-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #222;
+            border: 1px solid #444;
+            padding: 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            width: 300px;
+        }
+        .donation-modal h3 {
+            margin-top: 0;
+            color: #FFD700;
+        }
+        .donation-modal p {
+            margin: 10px 0;
+        }
+        .donation-modal button {
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            padding: 8px 16px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .donation-modal button:hover {
+            background: #444;
+        }
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+        }
+    </style>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
 <body>
-  <div class="chat-container">
-    <div class="chat-box" id="chat-box"></div>
-    <div class="chat-input">
-      <input type="text" id="chat-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendMessage()">
-      <button onclick="sendMessage()">Send</button>
+    <div class="info-panel">
+        <div>zsfcat</div>
+        <div class="capacity-info">Screen capacity: <span id="capacity">calculating...</span> messages</div>
     </div>
-  </div>
-
-  <!-- Donation Modal -->
-  <div class="modal" id="donation-modal">
-    <div class="modal-content">
-      <h3>Confirm Donation</h3>
-      <p>Amount: <span id="donation-amount"></span> SOL</p>
-      <button onclick="confirmDonation()">Confirm with Phantom</button>
-      <button onclick="closeDonationModal()">Cancel</button>
+    
+    <div id="chat-container">
+        <div id="messages"></div>
+        <div id="input-container">
+            <input type="text" id="message-input" placeholder="Type your message...">
+            <button id="send-button">Send</button>
+        </div>
+        <div class="command-help">Type /help for available commands</div>
+        <div id="status">Setting up Firebase...</div>
     </div>
-  </div>
 
-  <script>
-    // --- Firebase Setup ---
-    const firebaseConfig = {
-      apiKey: "YOUR_FIREBASE_KEY",
-      authDomain: "YOUR_FIREBASE_DOMAIN",
-      databaseURL: "YOUR_FIREBASE_DB_URL",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_BUCKET",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    <div class="overlay" id="overlay"></div>
+    <div class="donation-modal" id="donation-modal">
+        <h3>Donate Bitcoin</h3>
+        <p>Send <span id="donation-amount">0</span> BTC to:</p>
+        <p style="word-break: break-all; background: #333; padding: 10px; border-radius: 4px;">bc1qc50kzxn7wlnzpty99qcqe4sxkq2xzd80d8drhh</p>
+        <p>After transaction confirmation, you'll receive a DONOR badge!</p>
+        <div>
+            <button onclick="confirmDonation()">I've Sent BTC</button>
+            <button onclick="closeDonationModal()">Cancel</button>
+        </div>
+    </div>
 
-    const chatBox = document.getElementById("chat-box");
-    const inputBox = document.getElementById("chat-input");
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBQNZZ3NYi9-KQ1arau07DWl_aKFb7c370",
+            authDomain: "zsfcat-b5759.firebaseapp.com",
+            databaseURL: "https://zsfcat-b5759-default-rtdb.firebaseio.com",
+            projectId: "zsfcat-b5759",
+            storageBucket: "zsfcat-b5759.firebasestorage.app",
+            messagingSenderId: "482157676967",
+            appId: "1:482157676967:web:92fc8f1e1d1dc759cd0e82",
+            measurementId: "G-2GT8MRSMQJ"
+        };
 
-    let username = "User" + Math.floor(Math.random()*1000);
-    let donorUsers = {};
-    let donationAmount = 0;
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-    // --- Messages ---
-    function sendMessage() {
-      const msg = inputBox.value.trim();
-      if (!msg) return;
-      if (msg.startsWith("/donate_")) {
-        const amount = msg.split("_")[1];
-        openDonationModal(amount);
-      } else {
-        db.ref("messages").push({ user: username, text: msg });
-      }
-      inputBox.value = "";
-    }
+        const usernameColors = [
+            '#FF6B6B', '#4ECDC4', '#FFE66D', '#6B5B95', '#88D8B0',
+            '#FFA69E', '#70D6FF', '#F9C80E', '#A4036F', '#048BA8',
+            '#16DB93', '#EFEA5A', '#F29E4C', '#ED6A5A', '#9BC53D'
+        ];
 
-    function addMessage(user, text) {
-      const div = document.createElement("div");
-      div.innerHTML = `<b>${user}</b>${donorUsers[user] ? ' <span class="badge">DONOR</span>' : ''}: ${text}`;
-      chatBox.appendChild(div);
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
+        const userColorMap = {};
+        const mutedUsers = {};
+        const bannedUsers = {};
+        const donorUsers = {};
 
-    function addSystemMessage(text) {
-      const div = document.createElement("div");
-      div.style.color = "gray";
-      div.textContent = text;
-      chatBox.appendChild(div);
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
+        function setCookie(name, value, days) {
+            const expires = new Date();
+            expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Strict`;
+        }
 
-    function addWarningMessage(text) {
-      const div = document.createElement("div");
-      div.style.color = "red";
-      div.textContent = text;
-      chatBox.appendChild(div);
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
 
-    // --- Donation Modal ---
-    function openDonationModal(amount) {
-      donationAmount = parseFloat(amount);
-      document.getElementById("donation-amount").textContent = donationAmount;
-      document.getElementById("donation-modal").style.display = "flex";
-    }
-    function closeDonationModal() {
-      document.getElementById("donation-modal").style.display = "none";
-    }
+        function generateRandomUsername() {
+            const adjectives = ['Swift', 'Clever', 'Mystic', 'Silent', 'Brave', 'Fierce', 'Gentle', 'Nimble', 'Wise', 'Sly'];
+            const nouns = ['Fox', 'Wolf', 'Eagle', 'Dragon', 'Phoenix', 'Lion', 'Tiger', 'Bear', 'Hawk', 'Falcon'];
+            
+            const adjIndex = Math.floor(Math.random() * adjectives.length);
+            const nounIndex = Math.floor(Math.random() * nouns.length);
+            const number = Math.floor(Math.random() * 1000);
+            
+            return `${adjectives[adjIndex]}${nouns[nounIndex]}${number}`;
+        }
 
-    // --- Phantom Connect ---
-    async function connectPhantom() {
-      if (!window.solana || !window.solana.isPhantom) {
-        addWarningMessage("Phantom Wallet not found. Please install Phantom.");
-        return null;
-      }
-      try {
-        const resp = await window.solana.connect();
-        return resp.publicKey.toString();
-      } catch (err) {
-        addWarningMessage("Connection to Phantom cancelled.");
-        return null;
-      }
-    }
+        function getUsername() {
+            let username = getCookie('chat_username');
+            if (!username) {
+                username = generateRandomUsername();
+                setCookie('chat_username', username, 365);
+            }
+            return username;
+        }
 
-    // --- Confirm Donation ---
-    async function confirmDonation() {
-      const recipient = "7Ga6TYqsf6pnWf5h6ZkJDdoBXC3NDvrzx7whH99ais6D"; // your wallet
-      const pubkey = await connectPhantom();
-      if (!pubkey) return;
+        function getColorForUsername(username) {
+            if (username === 'THE_CREATOR') {
+                return '#00FFFF';
+            }
+            
+            if (!userColorMap[username]) {
+                let hash = 0;
+                for (let i = 0; i < username.length; i++) {
+                    hash = ((hash << 5) - hash) + username.charCodeAt(i);
+                    hash = hash & hash;
+                }
+                const colorIndex = Math.abs(hash) % usernameColors.length;
+                userColorMap[username] = usernameColors[colorIndex];
+            }
+            return userColorMap[username];
+        }
 
-      try {
-        const provider = window.solana;
-        const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl("mainnet-beta"), "confirmed");
+        function checkForNSFW(content) {
+            const nsfwWords = [
+                'fuck', 'shit', 'asshole', 'bitch', 'cunt', 'dick', 'pussy', 
+                'nigger', 'nigga', 'faggot', 'whore', 'slut', 'cock', 'porn',
+                'sex', 'anal', 'blowjob', 'tits', 'boobs', 'hentai', 'xxx'
+            ];
+            
+            const words = content.toLowerCase().split(/\s+/);
+            return words.some(word => nsfwWords.includes(word));
+        }
 
-        const transaction = new solanaWeb3.Transaction().add(
-          solanaWeb3.SystemProgram.transfer({
-            fromPubkey: new solanaWeb3.PublicKey(pubkey),
-            toPubkey: new solanaWeb3.PublicKey(recipient),
-            lamports: solanaWeb3.LAMPORTS_PER_SOL * donationAmount
-          })
-        );
+        function isUserMuted(username) {
+            if (username === 'THE_CREATOR') return false;
+            
+            if (mutedUsers[username] && mutedUsers[username] > Date.now()) {
+                return true;
+            }
+            if (mutedUsers[username] && mutedUsers[username] <= Date.now()) {
+                delete mutedUsers[username];
+            }
+            return false;
+        }
 
-        transaction.feePayer = new solanaWeb3.PublicKey(pubkey);
-        transaction.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
+        function isUserBanned(username) {
+            if (username === 'THE_CREATOR') return false;
+            
+            if (bannedUsers[username] && bannedUsers[username] > Date.now()) {
+                return true;
+            }
+            if (bannedUsers[username] && bannedUsers[username] <= Date.now()) {
+                delete bannedUsers[username];
+            }
+            return false;
+        }
 
-        const signed = await provider.signTransaction(transaction);
-        await connection.sendRawTransaction(signed.serialize());
+        function muteUser(username, minutes) {
+            if (username === 'THE_CREATOR') {
+                addSystemMessage('Cannot mute THE_CREATOR');
+                return null;
+            }
+            
+            const muteTime = Date.now() + (minutes * 60 * 1000);
+            mutedUsers[username] = muteTime;
+            return muteTime;
+        }
 
-        donorUsers[username] = true;
-        addSystemMessage(`Thank you ${username} for donating ${donationAmount} SOL! You've received a DONOR badge.`);
-        closeDonationModal();
-      } catch (err) {
-        addWarningMessage("Transaction failed or cancelled.");
-      }
-    }
+        function banUser(username, days) {
+            if (username === 'THE_CREATOR') {
+                addSystemMessage('Cannot ban THE_CREATOR');
+                return null;
+            }
+            
+            const banTime = Date.now() + (days * 24 * 60 * 60 * 1000);
+            bannedUsers[username] = banTime;
+            return banTime;
+        }
 
-    // --- Load Messages ---
-    db.ref("messages").on("child_added", (snapshot) => {
-      const msg = snapshot.val();
-      addMessage(msg.user, msg.text);
-    });
-  </script>
+        function showDonationModal(amount) {
+            document.getElementById('donation-amount').textContent = amount;
+            document.getElementById('donation-modal').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+        }
+
+        function closeDonationModal() {
+            document.getElementById('donation-modal').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+        }
+
+        function confirmDonation() {
+            const amount = document.getElementById('donation-amount').textContent;
+            donorUsers[username] = true;
+            setCookie('user_donor', 'true', 365);
+            addSystemMessage(`Thank you ${username} for donating ${amount} BTC! You've received a DONOR badge.`);
+            closeDonationModal();
+        }
+
+        function isUserDonor(username) {
+            return donorUsers[username] || getCookie('user_donor') === 'true';
+        }
+
+        function processCommand(command, originalUsername) {
+            const parts = command.split('_');
+            
+            if (command === '/blankslate') {
+                clearAllMessages();
+                return true;
+            }
+            
+            if (command === '/i_am_the_creator') {
+                if (originalUsername !== 'THE_CREATOR') {
+                    setCookie('chat_username', 'THE_CREATOR', 365);
+                    addSystemMessage(`${originalUsername} has been promoted to THE_CREATOR`);
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                }
+                return true;
+            }
+            
+            if (command === '/peasant') {
+                if (originalUsername === 'THE_CREATOR') {
+                    const peasantName = generateRandomUsername();
+                    setCookie('chat_username', peasantName, 365);
+                    addSystemMessage('THE_CREATOR has disguised as a peasant');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                }
+                return true;
+            }
+            
+            if (parts[0] === '/donate' && parts.length === 2) {
+                const amount = parseFloat(parts[1]);
+                if (!isNaN(amount) && amount > 0) {
+                    showDonationModal(amount);
+                    return true;
+                }
+            }
+            
+            if (parts[0] === '/mute' && parts.length === 3) {
+                const targetUser = parts[1];
+                const minutes = parseInt(parts[2]);
+                
+                if (targetUser === 'THE_CREATOR') {
+                    addSystemMessage('Cannot mute THE_CREATOR');
+                    return true;
+                }
+                
+                if (!isNaN(minutes) && minutes > 0) {
+                    const muteTime = muteUser(targetUser, minutes);
+                    if (muteTime) {
+                        addSystemMessage(`${targetUser} has been muted for ${minutes} minutes`);
+                    }
+                    return true;
+                }
+            }
+            
+            if (parts[0] === '/ban' && parts.length === 3) {
+                const targetUser = parts[1];
+                const days = parseInt(parts[2]);
+                
+                if (targetUser === 'THE_CREATOR') {
+                    addSystemMessage('Cannot ban THE_CREATOR');
+                    return true;
+                }
+                
+                if (!isNaN(days) && days > 0) {
+                    const banTime = banUser(targetUser, days);
+                    if (banTime) {
+                        addSystemMessage(`${targetUser} has been banned for ${days} days`);
+                    }
+                    return true;
+                }
+            }
+            
+            if (command === '/help') {
+                addSystemMessage('Available commands: /blankslate, /i_am_the_creator, /peasant, /donate_[amount], /mute_[user]_[mins], /ban_[user]_[days]');
+                return true;
+            }
+            
+            return false;
+        }
+
+        function calculateScreenCapacity() {
+            const messagesContainer = document.getElementById('messages');
+            if (!messagesContainer) return 20;
+            
+            const testMessage = document.createElement('div');
+            testMessage.className = 'message';
+            testMessage.innerHTML = '<span class="username">TestUser:</span> This is a test message to calculate screen capacity. <span class="timestamp">00:00:00</span>';
+            testMessage.style.position = 'absolute';
+            testMessage.style.visibility = 'hidden';
+            document.body.appendChild(testMessage);
+            
+            const messageHeight = testMessage.offsetHeight;
+            const containerHeight = messagesContainer.offsetHeight;
+            const capacity = Math.max(10, Math.floor(containerHeight / messageHeight));
+            
+            document.body.removeChild(testMessage);
+            
+            document.getElementById('capacity').textContent = capacity;
+            
+            return capacity;
+        }
+
+        async function clearAllMessages() {
+            try {
+                const querySnapshot = await db.collection("messages")
+                    .orderBy("timestamp", "desc")
+                    .get();
+                
+                const deletePromises = [];
+                querySnapshot.forEach((doc) => {
+                    deletePromises.push(doc.ref.delete());
+                });
+                
+                await Promise.all(deletePromises);
+                
+                await db.collection("messages").add({
+                    user: "System",
+                    text: `Chat history was cleared by ${username}`,
+                    time: new Date().toLocaleTimeString(),
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                return true;
+            } catch (error) {
+                console.error("Error clearing messages:", error);
+                return false;
+            }
+        }
+
+        function addSystemMessage(text) {
+            const messagesContainer = document.getElementById('messages');
+            const systemMessage = document.createElement('div');
+            systemMessage.className = 'system-message';
+            systemMessage.textContent = text;
+            messagesContainer.appendChild(systemMessage);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function addWarningMessage(text) {
+            const messagesContainer = document.getElementById('messages');
+            const warningMessage = document.createElement('div');
+            warningMessage.className = 'warning-message';
+            warningMessage.textContent = text;
+            messagesContainer.appendChild(warningMessage);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function addModeratorMessage(text) {
+            const messagesContainer = document.getElementById('messages');
+            const moderatorMessage = document.createElement('div');
+            moderatorMessage.className = 'moderator-message';
+            moderatorMessage.textContent = text;
+            messagesContainer.appendChild(moderatorMessage);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        let username = '';
+        let screenCapacity = 20;
+
+        async function initializeChat() {
+            try {
+                username = getUsername();
+                document.getElementById('status').textContent = `Connected as ${username}`;
+                
+                screenCapacity = calculateScreenCapacity();
+                
+                window.addEventListener('resize', () => {
+                    screenCapacity = calculateScreenCapacity();
+                    loadMessages();
+                });
+                
+                if (getCookie('user_donor') === 'true') {
+                    donorUsers[username] = true;
+                }
+                
+                loadMessages();
+                document.getElementById('message-input').focus();
+            } catch (error) {
+                document.getElementById('status').textContent = 'Error initializing chat. Please check Firebase setup.';
+            }
+        }
+
+        function loadMessages() {
+            db.collection("messages")
+                .orderBy("timestamp", "desc")
+                .limit(screenCapacity)
+                .onSnapshot((querySnapshot) => {
+                    const messages = [];
+                    querySnapshot.forEach((doc) => {
+                        messages.push(doc.data());
+                    });
+                    displayMessages(messages.reverse());
+                }, (error) => {
+                    document.getElementById('status').textContent = 'Error loading messages. Please make sure Firestore is enabled.';
+                });
+        }
+
+        function displayMessages(messages) {
+            const messagesContainer = document.getElementById('messages');
+            messagesContainer.innerHTML = '';
+            
+            messages.forEach(msg => {
+                const messageElement = document.createElement('div');
+                messageElement.className = 'message';
+                
+                if (msg.user === "System") {
+                    messageElement.innerHTML = `
+                        <div class="system-message">${msg.text}</div>
+                    `;
+                } else if (msg.user === "Moderator") {
+                    messageElement.innerHTML = `
+                        <div class="moderator-message">${msg.text}</div>
+                    `;
+                } else {
+                    const userColor = getColorForUsername(msg.user);
+                    const isCreator = msg.user === 'THE_CREATOR';
+                    const isDonor = isUserDonor(msg.user);
+                    
+                    messageElement.innerHTML = `
+                        <span class="username ${isCreator ? 'creator-theme' : ''}" style="color: ${userColor}">${msg.user}</span>
+                        ${isCreator ? '<span class="creator-badge">CREATOR</span>' : ''}
+                        ${isDonor ? '<span class="donor-badge">DONOR</span>' : ''}
+                        <span>: ${msg.text}</span>
+                        <span class="timestamp">${msg.time}</span>
+                    `;
+                }
+                
+                messagesContainer.appendChild(messageElement);
+            });
+            
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('message-input');
+            const text = input.value.trim();
+            
+            if (text) {
+                try {
+                    if (isUserBanned(username)) {
+                        addWarningMessage('You are banned and cannot send messages');
+                        input.value = '';
+                        return;
+                    }
+                    
+                    if (isUserMuted(username)) {
+                        addWarningMessage('You are muted and cannot send messages');
+                        input.value = '';
+                        return;
+                    }
+                    
+                    if (text.startsWith('/')) {
+                        const isCommand = processCommand(text, username);
+                        input.value = '';
+                        if (isCommand) return;
+                    }
+                    
+                    if (username !== 'THE_CREATOR' && checkForNSFW(text)) {
+                        addModeratorMessage(`Moderator: Message from ${username} was flagged as NSFW and removed`);
+                        muteUser(username, 5);
+                        addSystemMessage(`${username} has been muted for 5 minutes for NSFW content`);
+                        input.value = '';
+                        return;
+                    }
+                    
+                    await db.collection("messages").add({
+                        user: username,
+                        text: text,
+                        time: new Date().toLocaleTimeString(),
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    input.value = '';
+                } catch (error) {
+                    document.getElementById('status').textContent = 'Error sending message. Please check Firebase configuration.';
+                }
+            }
+        }
+
+        document.getElementById('send-button').addEventListener('click', sendMessage);
+        
+        document.getElementById('message-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        window.addEventListener('load', initializeChat);
+    </script>
 </body>
 </html>
