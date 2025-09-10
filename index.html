@@ -115,12 +115,16 @@
             text-align: center;
         }
         .creator-badge {
-            background: linear-gradient(45deg, #FF0000, #FF8C00, #FFD700);
+            background: linear-gradient(45deg, #00FFFF, #008B8B);
             color: black;
             padding: 2px 6px;
             border-radius: 4px;
             font-weight: bold;
             margin-left: 5px;
+        }
+        .creator-theme {
+            color: #00FFFF !important;
+            text-shadow: 0 0 5px #00FFFF, 0 0 10px #00FFFF;
         }
     </style>
     
@@ -217,6 +221,10 @@
 
         // Get a color for a username
         function getColorForUsername(username) {
+            if (username === 'THE_CREATOR') {
+                return '#00FFFF'; // Cyan for THE_CREATOR
+            }
+            
             if (!userColorMap[username]) {
                 // Generate a consistent index based on username
                 let hash = 0;
@@ -242,8 +250,10 @@
             return words.some(word => nsfwWords.includes(word));
         }
 
-        // Check if user is muted
+        // Check if user is muted (THE_CREATOR cannot be muted)
         function isUserMuted(username) {
+            if (username === 'THE_CREATOR') return false;
+            
             if (mutedUsers[username] && mutedUsers[username] > Date.now()) {
                 return true;
             }
@@ -254,8 +264,10 @@
             return false;
         }
 
-        // Check if user is banned
+        // Check if user is banned (THE_CREATOR cannot be banned)
         function isUserBanned(username) {
+            if (username === 'THE_CREATOR') return false;
+            
             if (bannedUsers[username] && bannedUsers[username] > Date.now()) {
                 return true;
             }
@@ -266,15 +278,25 @@
             return false;
         }
 
-        // Mute a user for specified minutes
+        // Mute a user for specified minutes (cannot mute THE_CREATOR)
         function muteUser(username, minutes) {
+            if (username === 'THE_CREATOR') {
+                addSystemMessage('Cannot mute THE_CREATOR');
+                return null;
+            }
+            
             const muteTime = Date.now() + (minutes * 60 * 1000);
             mutedUsers[username] = muteTime;
             return muteTime;
         }
 
-        // Ban a user for specified days
+        // Ban a user for specified days (cannot ban THE_CREATOR)
         function banUser(username, days) {
+            if (username === 'THE_CREATOR') {
+                addSystemMessage('Cannot ban THE_CREATOR');
+                return null;
+            }
+            
             const banTime = Date.now() + (days * 24 * 60 * 60 * 1000);
             bannedUsers[username] = banTime;
             return banTime;
@@ -307,9 +329,16 @@
                 const targetUser = parts[1];
                 const minutes = parseInt(parts[2]);
                 
+                if (targetUser === 'THE_CREATOR') {
+                    addSystemMessage('Cannot mute THE_CREATOR');
+                    return true;
+                }
+                
                 if (!isNaN(minutes) && minutes > 0) {
                     const muteTime = muteUser(targetUser, minutes);
-                    addSystemMessage(`${targetUser} has been muted for ${minutes} minutes`);
+                    if (muteTime) {
+                        addSystemMessage(`${targetUser} has been muted for ${minutes} minutes`);
+                    }
                     return true;
                 }
             }
@@ -319,9 +348,16 @@
                 const targetUser = parts[1];
                 const days = parseInt(parts[2]);
                 
+                if (targetUser === 'THE_CREATOR') {
+                    addSystemMessage('Cannot ban THE_CREATOR');
+                    return true;
+                }
+                
                 if (!isNaN(days) && days > 0) {
                     const banTime = banUser(targetUser, days);
-                    addSystemMessage(`${targetUser} has been banned for ${days} days`);
+                    if (banTime) {
+                        addSystemMessage(`${targetUser} has been banned for ${days} days`);
+                    }
                     return true;
                 }
             }
@@ -490,7 +526,7 @@
                     const isCreator = msg.user === 'THE_CREATOR';
                     
                     messageElement.innerHTML = `
-                        <span class="username" style="color: ${userColor}">${msg.user}</span>
+                        <span class="username ${isCreator ? 'creator-theme' : ''}" style="color: ${userColor}">${msg.user}</span>
                         ${isCreator ? '<span class="creator-badge">CREATOR</span>' : ''}
                         <span>: ${msg.text}</span>
                         <span class="timestamp">${msg.time}</span>
@@ -510,14 +546,14 @@
             
             if (text) {
                 try {
-                    // Check if user is banned
+                    // Check if user is banned (THE_CREATOR is immune)
                     if (isUserBanned(username)) {
                         addWarningMessage('You are banned and cannot send messages');
                         input.value = '';
                         return;
                     }
                     
-                    // Check if user is muted
+                    // Check if user is muted (THE_CREATOR is immune)
                     if (isUserMuted(username)) {
                         addWarningMessage('You are muted and cannot send messages');
                         input.value = '';
@@ -531,8 +567,8 @@
                         if (isCommand) return;
                     }
                     
-                    // AI Moderation - Check for NSFW content
-                    if (checkForNSFW(text)) {
+                    // AI Moderation - Check for NSFW content (THE_CREATOR is immune)
+                    if (username !== 'THE_CREATOR' && checkForNSFW(text)) {
                         // Add warning message
                         addModeratorMessage(`Moderator: Message from ${username} was flagged as NSFW and removed`);
                         
